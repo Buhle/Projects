@@ -1,4 +1,9 @@
+import json
 import socket, select, sys
+import requests
+
+
+base_url = 'http://localhost:5000'
 
 
 def chat_conversation():
@@ -16,8 +21,8 @@ def chat_conversation():
     except:
         print 'Connection failed'
         sys.exit()
-
-    prompt()
+    msg = ''
+    prompt(msg)
 
     while 1:
         socket_list = [sys.stdin, soc]
@@ -30,17 +35,33 @@ def chat_conversation():
                     print '\nDisconnected from chat server'
                     sys.exit()
                 else:
-                    sys.stdout.write(data)
-                    prompt()
+                    msg = sys.stdout.write(data)
+                    prompt(msg)
             else:
                 msg = sys.stdin.readline()
                 soc.send(msg)
-                prompt()
+                prompt(msg)
 
 
-def prompt():
-    sys.stdout.write('<Me> ')
-    sys.stdout.flush()
+def prompt(message):
+    username = '24680'
+    try:
+        payload = {'username': username, 'message': message}
+        r = requests.post(base_url + '/chat', data=json.dumps(payload))
+
+        if r.text == 'chat saved':
+            sys.stdout.write('<Me>')
+            sys.stdout.flush()
+        else:
+            try:
+                r = requests.post(base_url + '/chat', data=json.dumps(payload))
+                sys.stdout.write('<Me>')
+                sys.stdout.flush()
+            except:
+                sys.stdout.write('<Me>')
+                sys.stdout.flush()
+    except:
+        print('something went wrong')
 
 
 if __name__ == "__main__":

@@ -1,7 +1,12 @@
+import json
 import select
+
+import requests
+
 import connection
 
 connections, socket_server, receiver = connection.server_connection()
+base_url = 'http://localhost:5000'
 
 
 def chat_conversation():
@@ -16,11 +21,12 @@ def chat_conversation():
                 broadcast_data(sockfd, "Friend is online\n")
             else:
                 try:
-                    data = sock.recv(receiver)
-                    if data:
-                        broadcast_data(sock, "\r" + '<Friend> ' + data)
+                    sock_id = sock.getpeername()[1]
+                    message = sock.recv(receiver)
+                    if message:
+                        broadcast_data(sock, "\r" + '<' + str(sock_id) + '> ' + message)
                 except:
-                    broadcast_data(sock, "Friend is offline")
+                    broadcast_data(sock, "Friend is offline\n")
                     sock.close()
                     connections.remove(sock)
                     continue
@@ -29,10 +35,21 @@ def chat_conversation():
 
 
 def broadcast_data(sock, message):
+    username = '12345'
     for socket in connections:
         if socket != socket_server and socket != sock:
             try:
-                socket.send(message)
+                payload = {'username': username, 'message': message}
+                r = requests.post(base_url + '/chat', data=json.dumps(payload))
+
+                if r.text == 'chat saved':
+                    socket.send(message)
+                else:
+                    try:
+                        r = requests.post(base_url + '/chat', data=json.dumps(payload))
+                        socket.send(message)
+                    except:
+                        socket.send(message)
             except:
                 socket.close()
                 connections.remove(socket)
@@ -40,4 +57,3 @@ def broadcast_data(sock, message):
 
 if __name__ == "__main__":
     chat_conversation()
-
