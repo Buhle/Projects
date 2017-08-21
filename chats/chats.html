@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chats</title><script language="JavaScript" type="text/javascript" src="jquery-1.7.1.min.js"></script>
+    <script type="text/javascript" language="javascript">
+    var base_url = 'http://localhost:5000'
+
+    var update_message = {"id": 5, "message": "how is your day", "username": 12345 }
+    var save_message = {"messageto": '24680', "message": "how is your day", "username": 12345 }
+
+    function UpdateChats() {
+        var xhttp = new XMLHttpRequest();
+        xhttp.open("PUT", base_url + "/chat", false);
+        xhttp.setRequestHeader("Content-type", "application/json");
+        xhttp.send(update_message);
+        var response = JSON.parse(xhttp.responseText);
+        alert(response);
+    }
+
+    function SaveChats() {
+        var xhttp = new XMLHttpRequest();
+        xhttp.open("POST", base_url + "/chat", false);
+        xhttp.setRequestHeader("Content-type", "application/json");
+        xhttp.send(save_message);
+        var response = JSON.parse(xhttp.responseText);
+        alert(response);
+    }
+
+    </script>
+</head>
+<body>
+
+<button type="submit" onclick="UpdateChats()">Update Chat</button>
+
+<button type="submit" onclick="SaveChats()">Save Chat</button>
+
+</body>
+</html>

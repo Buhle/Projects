@@ -32,6 +32,7 @@ ChatTable = sql.Table('chat', metadata,
                     sql.Column('creationdate', sql.DateTime),
                     sql.Column('username', sql.String(250)),
                     sql.Column('message', sql.String(250)),
+                    sql.Column('messageto', sql.String(250)),
                   )
 
 metadata.create_all(engine)
@@ -50,7 +51,7 @@ def sql_query_to_insert(query):
 
 
 # Get all chats for specified user
-def sql_query_get_chat(query):
+def sql_query_get_all_chat(query):
     try:
         conn = engine.connect()
         result = conn.execute(query).fetchall()
@@ -64,6 +65,24 @@ def sql_query_get_chat(query):
     # starts with a new Pool
     conn = engine.connect()
     result = conn.execute(query).fetchall()
+    conn.close()
 
     return result
 
+def sql_query_get_one_chat(query):
+    try:
+        conn = engine.connect()
+        result = conn.execute(query).fetchone()
+        conn.close()
+    except exc.DBAPIError as e:
+        # an exception is raised, Connection is invalidated.
+        if e.connection_invalidated:
+            print("Connection was invalidated!")
+
+    # after the invalidate event, a new connection start
+    # starts with a new Pool
+    conn = engine.connect()
+    result = conn.execute(query).fetchone()
+    conn.close()
+
+    return result
