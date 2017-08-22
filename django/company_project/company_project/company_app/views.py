@@ -1,8 +1,10 @@
 from uuid import uuid1
+
+import datetime
 from rest_framework import status
 from rest_framework import viewsets
-from company_app.models import Companies
-from company_app.serializers import CompanySerializer
+from .models import Companies
+from .serializers import CompanySerializer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
@@ -19,14 +21,18 @@ def company_list_and_creation(request):
         serializer = CompanySerializer(data=request.data)
         if serializer.is_valid():
             company = Companies()
+            company.company_id = uuid1()
             company.company_name = serializer.data['company_name']
-
+            company.company_reg = serializer.data['company_reg']
+            company.address = serializer.data['address']
+            company.created_at = datetime.datetime.now()
             # Check company id exist
-            item = Companies.objects.filter(company_id=company.company_name).allow_filtering()
+            item = Companies.objects.filter(company_name=company.company_name)
             number = item.count()
 
             if number == 0:
-                serializer.save()
+                company.save()
+                serializer = CompanySerializer(company)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             else:
                 # Return error mesage
@@ -35,20 +41,36 @@ def company_list_and_creation(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['GET'])
-def retrieve_company_details(request):
+@api_view(['GET', 'DELETE'])
+def retrieve_company_details(request, _id):
     """Get company details """
     if request.method == 'GET':
-        company = Companies.objects.filter(company_id=id).allow_filtering()
+        print('here')
+        company = Companies.objects.get(company_id=_id)
+        print(company)
         serializer = CompanySerializer(company, many=False)
         return Response(serializer.data, status.HTTP_200_OK)
 
+    elif request.method == 'DELETE':
+        company = Companies.objects.filter(company_id=id)
+        if len(company) > 0:
+            company.delete()
+            return Response({'message': 'successful deleted!'}, status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response({'message': 'company not deleted!'})
 
-class CreateCompanyViewSet(viewsets.ModelViewSet):
-    def get(self, request):
-        staff = Companies.objects.filter().allow_filtering()
-        serializer = CompanySerializer(staff, many=True)
-        return Response(serializer.data, status.HTTP_200_OK)
+# ====================================================================================================================
+
+
+# =====================================================================================================================
+class DefaultMixin(object):
+    serializer_class = CompanySerializer
+    paginate_by = 10
+
+
+class CreateCompanyViewSet(DefaultMixin, viewsets.ModelViewSet):
+    def get_queryset(self):
+        return Companies.objects.all()
 
     def create(self, request, *args, **kwargs):
         serializer = CompanySerializer(data=request.data)
@@ -58,7 +80,7 @@ class CreateCompanyViewSet(viewsets.ModelViewSet):
             company.company_name = serializer.data['company_name']
 
             # Check company id exist
-            item = Companies.objects.filter(company_id=company.company_name).allow_filtering()
+            item = Companies.objects.filter(company_name=company.company_name).allow_filtering()
             number = item.count()
 
             if number == 0:
